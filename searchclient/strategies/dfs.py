@@ -11,39 +11,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import annotations
+from collections import deque
 
 import domains.hospital.goal_description as h_goal_description
 import domains.hospital.state as h_state
+
 
 class FrontierDFS:
 
     def __init__(self):
         # Your code here...
-        raise NotImplementedError()
+        self.queue = deque()
+        self.set = set()
 
     def prepare(self, goal_description: h_goal_description.HospitalGoalDescription):
         # Prepare is called at the beginning of a search and since we will sometimes reuse frontiers for multiple
         # searches, prepares must ensure that state is cleared.
-        
+
         # Your code here...
-        raise NotImplementedError()
+        self.queue.clear()
+        self.set.clear()
 
     def add(self, state: h_state.HospitalState):
         # Your code here...
-        raise NotImplementedError()
+        self.queue.append(state)
+        self.set.add(state)
 
     def pop(self) -> h_state.HospitalState:
         # Your code here...
-        raise NotImplementedError()
+        state = self.queue.pop()
+        self.set.remove(state)
+        return state
 
     def is_empty(self) -> bool:
         # Your code here...
-        raise NotImplementedError()
+        return len(self.queue) == 0
 
     def size(self) -> int:
         # Your code here...
-        raise NotImplementedError()
+        return len(self.queue)
 
     def contains(self, state: h_state.HospitalState) -> bool:
         # Your code here...
-        raise NotImplementedError()
+        return state in self.set

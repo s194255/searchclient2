@@ -23,15 +23,16 @@ import strategies.bfs as bfs
 
 from domains.hospital.actions import MoveAction
 
+
 # Note: This syntax below (<variable name>: <variable type>) is type hinting and is meant
 # to make it easier for you to understand (now you know that `action_set` is a list of lists of
 # actions!) but if it is confusing, you can just ignore it as it is only for documentation
 def graph_search(
-        initial_state:      state.HospitalState,
-        action_set:         list[list[actions.AnyAction]],
-        goal_description:   goal_description.HospitalGoalDescription,
-        frontier:           bfs.FrontierBFS
-    ) -> tuple[bool, list[list[actions.AnyAction]]]:
+        initial_state: state.HospitalState,
+        action_set: list[list[actions.AnyAction]],
+        goal_description: goal_description.HospitalGoalDescription,
+        frontier: bfs.FrontierBFS
+) -> tuple[bool, list[list[actions.AnyAction]]]:
     global start_time
 
     # Set start time
@@ -42,6 +43,10 @@ def graph_search(
     # Clear the parent pointer and cost in order make sure that the initial state is a root node
     initial_state.parent = None
     initial_state.path_cost = 0
+
+    # check if initial node is a goal state
+    if goal_description.is_goal(initial_state):
+        return True, initial_state.extract_plan()
 
     # Here, you should implement the Graph-Search algorithm from R&N figure 3.7
     # The algorithm should here return a (boolean, list) pair where the boolean denotes
@@ -56,27 +61,37 @@ def graph_search(
     # For debugging, remember that you can use print(node, file=sys.stderr) to get a representation of the state.
     # You should also take a look at the frontiers in the strategies folder to see which methods they expose
 
-    return_fixed_solution = True
-    
-    if return_fixed_solution:
-        return True, [
-            [MoveAction("S")],
-            [MoveAction("E")],
-            [MoveAction("S")],
-            [MoveAction("E")],
-            [MoveAction("N")],
-            [MoveAction("N")],
-            [MoveAction("W")],
-            [MoveAction("W")],
-        ]
+    # return_fixed_solution = True
+
+    # if return_fixed_solution:
+    #     return True, [
+    #         [MoveAction("S")],
+    #         [MoveAction("S")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("E")],
+    #         [MoveAction("S")],
+    #         [MoveAction("S")]
+    #     ]
+
     frontier.add(initial_state)
+    reached = set([initial_state])
+    # print(initial_state.level.colors, file = sys.stderr)
+    # print(initial_state.agent_at((1,6)), file = sys.stderr)
     expanded = set()
 
-    while True:
+    while not frontier.is_empty():
 
         # Print a progress status message every 10000 iterations
         if iterations % 10000 == 0 and iterations != 0:
-            print_search_status(expanded, frontier)
+            print_search_status(expanded, frontier, reached)
 
         # Ensure that we do not use more memory than allowed
         if memory.get_usage() > memory.max_usage:
@@ -84,17 +99,41 @@ def graph_search(
             sys.exit(-1)
 
         iterations += 1
-
         # Your code here...
+        # print(frontier.size(), file=sys.stderr)
+        node = frontier.pop()
 
-        raise NotImplementedError()
+        # print(node, file=sys.stderr)
+        # print(iterations, file=sys.stderr)
+        # print(node, file=sys.stderr)
+
+        # get each available action for the state we are in
+        actions = node.get_applicable_actions(action_set)
+        # node has been expanded
+        expanded.add(node)
+        for action in actions:
+            # get child state based on the action we take
+            child = node.result(action)
+            # goal check
+            if goal_description.is_goal(child):
+                print_search_status(expanded, frontier, reached)
+                return True, child.extract_plan()
+
+            # if node has not been reached before, add to frontier.
+            if child not in reached:
+                frontier.add(child)
+                reached.add(child)
+
+    return False, False
+
+    # raise NotImplementedError()
 
 
 # A global variable used to keep track of the start time of the current search
 start_time = 0
 
 
-def print_search_status(expanded, frontier):
+def print_search_status(expanded, frontier, reached):
     global start_time
     if len(expanded) == 0:
         start_time = time.time()
@@ -104,8 +143,9 @@ def print_search_status(expanded, frontier):
     num_expanded = f"{len(expanded):8,d}".replace(',', '.')
     num_frontier = f"{frontier.size():8,d}".replace(',', '.')
     num_generated = f"{len(expanded) + frontier.size():8,d}".replace(',', '.')
+    num_reached = f"{len(reached):8,d}".replace(',', '.')
     elapsed_time = f"{time.time() - start_time:3.3f}".replace('.', ',')
-    memory_usage_mb = f"{memory_usage_bytes / (1024*1024):3.2f}".replace('.', ',')
+    memory_usage_mb = f"{memory_usage_bytes / (1024 * 1024):3.2f}".replace('.', ',')
     status_text = f"#Expanded: {num_expanded}, #Frontier: {num_frontier}, #Generated: {num_generated}," \
-                  f" Time: {elapsed_time} s, Memory: {memory_usage_mb} MB"
+                  f"#Reached: {num_reached} Time: {elapsed_time} s, Memory: {memory_usage_mb} MB"
     print(status_text, file=sys.stderr)
