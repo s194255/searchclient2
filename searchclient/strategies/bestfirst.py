@@ -18,6 +18,7 @@ import itertools
 import domains.hospital.goal_description as h_goal_description
 import domains.hospital.state as h_state
 
+
 # Here we define a priority queue which allows the priority of elements to be updated in constant time.
 # This priority queue is therefore suitable for usage as the frontier in a best-first search.
 class PriorityQueue:
@@ -83,39 +84,36 @@ class FrontierBestFirst:
 
     def __init__(self):
         self.goal_description = None
-        # Your code here...
-        raise NotImplementedError()
+        self.queue = PriorityQueue()
+        self.set = set()
 
     def prepare(self, goal_description: h_goal_description.HospitalGoalDescription):
         self.goal_description = goal_description
         # Prepare is called at the beginning of a search and since we will sometimes reuse frontiers for multiple
         # searches, prepares must ensure that state is cleared.
-        
-        # Your code here...
-        raise NotImplementedError()
+        self.queue.clear()
+        self.set.clear()
 
     def f(self, state: h_state.HospitalState, goal_description: h_goal_description.HospitalGoalDescription) -> int:
         raise Exception("FrontierBestFirst should not be directly used. Instead use a subclass overriding f()")
 
     def add(self, state: h_state.HospitalState):
-        # Your code here...
-        raise NotImplementedError()
+        self.queue.add(state, priority=self.f(state, self.goal_description))
+        self.set.add(state)
 
     def pop(self) -> h_state.HospitalState:
-        # Your code here...
-        raise NotImplementedError()
+        state = self.queue.pop()
+        self.set.remove(state)
+        return state
 
     def is_empty(self) -> bool:
-        # Your code here...
-        raise NotImplementedError()
+        return self.queue.size() == 0
 
     def size(self) -> int:
-        # Your code here...
-        raise NotImplementedError()
+        return self.queue.size()
 
     def contains(self, state: h_state.HospitalState) -> bool:
-        # Your code here...
-        raise NotImplementedError()
+        return state in self.set
 
 
 # The FrontierAStar and FrontierGreedy classes extend the FrontierBestFirst class, that is, they are
@@ -128,8 +126,10 @@ class FrontierAStar(FrontierBestFirst):
         self.heuristic = heuristic
 
     def f(self, state: h_state.HospitalState, goal_description: h_goal_description.HospitalGoalDescription) -> int:
-        # Your code here...
-        raise NotImplementedError()
+        g = len(state.extract_plan())
+        h = self.heuristic.h(state, self.goal_description)
+        f = g + h
+        return f
 
 
 class FrontierGreedy(FrontierBestFirst):
@@ -139,5 +139,5 @@ class FrontierGreedy(FrontierBestFirst):
         self.heuristic = heuristic
 
     def f(self, state: h_state.HospitalState, goal_description: h_goal_description.HospitalGoalDescription) -> int:
-        # Your code here...
-        raise NotImplementedError()
+        f = self.heuristic.h(state, self.goal_description)
+        return f
