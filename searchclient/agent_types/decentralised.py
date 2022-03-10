@@ -53,5 +53,3 @@ def decentralised_agent_type(level, initial_state, action_library, goal_descript
             if execution_successes[i] and len(pi[i]) != 0:
                 pi[i] = pi[i][1:]
 
-
-    raise NotImplementedError()
