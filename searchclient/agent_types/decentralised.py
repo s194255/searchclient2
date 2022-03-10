@@ -35,9 +35,14 @@ def decentralised_agent_type(level, initial_state, action_library, goal_descript
         pos, char = initial_state.agent_positions[i]
         agent_color = level.colors[char]
         monochrome_problem = initial_state.color_filter(agent_color)
+        monochrome_goal_description = goal_description.color_filter(agent_color)
 
-        planning_success, plan = graph_search(monochrome_problem, action_set, goal_description, frontier)
+        planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description, frontier)
         pi[i] = plan
+        if planning_success == False:
+            print("hov", file=sys.stderr)
+
+    print(pi, file=sys.stderr)
 
     while sum([len(plan) for plan in pi.values()]) != 0:
         joint_action = []

@@ -124,7 +124,7 @@ def graph_search(
                 frontier.add(child)
                 reached.add(child)
 
-    return False, False
+    return False, []
 
     # raise NotImplementedError()
 
