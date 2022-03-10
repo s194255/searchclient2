@@ -29,7 +29,7 @@ def decentralised_agent_type(level, initial_state, action_library, goal_descript
     #   in the joint action succeeded.
     num_agents = level.num_agents
     pi = {}
-    joint_action = []
+    # joint_action = []
 
     for i in range(num_agents):
         pos, char = initial_state.agent_positions[i]
@@ -40,11 +40,12 @@ def decentralised_agent_type(level, initial_state, action_library, goal_descript
         pi[i] = plan
 
     while sum([len(plan) for plan in pi.values()]) != 0:
+        joint_action = []
         for i in range(num_agents):
             if len(pi[i]) == 0:
                 joint_action.append(action_set[0][0])
             else:
-                joint_action.append(pi[i][0])
+                joint_action.append(pi[i][0][0])
 
         print(joint_action_to_string(joint_action), flush=True)
         execution_successes = parse_response(read_line())
