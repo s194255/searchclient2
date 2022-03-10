@@ -11,8 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+sys.path.append("..")
 from search_algorithms.graph_search import graph_search
 from utils import *
+
 
 
 def decentralised_agent_type(level, initial_state, action_library, goal_description, frontier):
@@ -24,4 +27,31 @@ def decentralised_agent_type(level, initial_state, action_library, goal_descript
     # use 'print(joint_action_to_string(joint_action), flush=True)' to send a joint_action to the server and
     # use 'parse_response(read_line())' to read back an array of booleans indicating whether each individual action
     #   in the joint action succeeded.
+    num_agents = level.num_agents
+    pi = {}
+    joint_action = []
+
+    for i in range(num_agents):
+        pos, char = initial_state.agent_positions[i]
+        agent_color = level.colors[char]
+        monochrome_problem = initial_state.color_filter(agent_color)
+
+        planning_success, plan = graph_search(monochrome_problem, action_set, goal_description, frontier)
+        pi[i] = plan
+
+    while sum([len(plan) for plan in pi.values()]) != 0:
+        for i in range(num_agents):
+            if len(pi[i]) == 0:
+                joint_action.append(action_set[0][0])
+            else:
+                joint_action.append(pi[i][0])
+
+        print(joint_action_to_string(joint_action), flush=True)
+        execution_successes = parse_response(read_line())
+
+        for i in range(num_agents):
+            if execution_successes[i] and len(pi[i]) != 0:
+                pi[i] = pi[i][1:]
+
+
     raise NotImplementedError()
