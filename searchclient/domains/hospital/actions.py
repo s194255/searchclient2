@@ -168,24 +168,26 @@ class PushAction:
 
     def is_applicable(self, agent_index: int, state: h_state.HospitalState) -> bool:
         current_agent_position, agent_char = state.agent_positions[agent_index]
-
-        # filter the state board by colour of the agent
-        filtered_state = state.color_filter(state.level.colors[agent_char])
-
         # get new agent position
         new_agent_position = self.calculate_agent_positions(current_agent_position)
 
         # control there is a box at new_agent_position
-        if filtered_state.box_at(new_agent_position) != (-1, ''):
+        if state.box_at(new_agent_position) != (-1, ''):
 
             # get box info
-            self.box_index, _ = filtered_state.box_at(new_agent_position)
-            current_box_position, _ = state.box_positions[self.box_index]
+            self.box_position = new_agent_position
+            self.box_idx, box_char = state.box_at(self.box_position)
 
-            # new box position
-            new_box_position = self.calculate_box_positions(current_box_position)
+            if self.box_idx == -1 and box_char == '':
+                color_check = False
+            else:
+                color_check = state.level.colors[box_char] == state.level.colors[agent_char]
 
-            return state.free_at(new_box_position)  # check that space is free at new_box_position
+            new_box_position = self.calculate_box_positions(self.box_position)
+
+            position_check = state.free_at(new_box_position)
+
+            return color_check and position_check
 
         else:
             return False
@@ -197,11 +199,11 @@ class PushAction:
         state.agent_positions[agent_index] = (new_agent_position, agent_char)
 
         # do the same for the box
-        _, box_char = state.box_positions[self.box_index]
+        _, box_char = state.box_positions[self.box_idx]
         current_box_position = new_agent_position
         new_box_position = self.calculate_box_positions(current_box_position)
 
-        state.box_positions[self.box_index] = (new_box_position, box_char)
+        state.box_positions[self.box_idx] = (new_box_position, box_char)
 
     def conflicts(self, agent_index: int, state: h_state.HospitalState) -> tuple[list[Position], list[Position]]:
         current_agent_position, _ = state.agent_positions[agent_index]

@@ -32,6 +32,7 @@ def classic_agent_type(level, initial_state, action_library, goal_description, f
 
         # Send the joint action to the server
         print(joint_action_to_string(joint_action), flush=True)
+        print(joint_action_to_string(joint_action), flush=True, file=sys.stderr)
         # Uncomment the below line to print the executed actions to the command line for debugging purposes
         # print(joint_action_to_string(joint_action), file=sys.stderr, flush=True)
 

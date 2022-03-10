@@ -58,5 +58,5 @@ def decentralised_agent_type(level, initial_state, action_library, goal_descript
         for i in range(num_agents):
             if execution_successes[i] and len(pi[i]) != 0:
                 pi[i] = pi[i][1:]
-            else:
-                print(execution_successes[i], file=sys.stderr)
+            # else:
+            #     print(execution_successes[i], file=sys.stderr)
