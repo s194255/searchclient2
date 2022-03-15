@@ -18,6 +18,7 @@ from utils import *
 
 
 
+
 def helper_agent_type(level, initial_state, action_library, goal_description, frontier):
 
     # Here you should implement the HELPER-AGENT algorithm.
@@ -31,4 +32,44 @@ def helper_agent_type(level, initial_state, action_library, goal_description, fr
     # - You probably want to create a helper function for creating the set of negative obstacle subgoals.
     #   You can then create a new goal description using 'goal_description.create_new_goal_description_of_same_type'
     #   which takes a list of subgoals.
-    raise NotImplementedError()
+
+    # agent 0 is the first in list, hopefully always
+    actor_index = 0
+
+    action_set = [[GenericNoOp()]] * level.num_agents
+    action_set[actor_index] = action_library
+
+
+    num_helpers = level.num_agents-1
+    actor_color = level.colors["0"]
+    monochrome_problem = initial_state.color_filter(actor_color)
+    monochrome_goal_description = goal_description.color_filter(actor_color)
+    pi = {}
+
+    current_state = initial_state
+    for i, subgoal in enumerate(monochrome_goal_description):
+        planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description, frontier)
+        pi[i] = plan
+        if planning_success == False:
+            print("execution faulted", file=sys.stderr)
+
+    for plan in pi:
+        for action in plan:
+            print(joint_action_to_string([action]), flush=True)
+            execution_successes = parse_response(read_line())
+
+            if execution_successes[0] == False:
+
+                next_pos = action.calculate_positions(current_state.agent_positions[actor_index][0])
+
+                obstacle_idx, obstacle_char = current_state.object_at(next_pos)
+
+
+
+
+
+
+
+
+
+    # raise NotImplementedError()
