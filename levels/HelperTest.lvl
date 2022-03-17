@@ -4,9 +4,8 @@ hospital
 Battlefield
 #colors
 blue: 0
-red: 
-green: 
-purple: 
+red: 1, B 
+green:2, C
 #initial
 ++++++++++++++++++
 +               0+
