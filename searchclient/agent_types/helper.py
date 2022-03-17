@@ -22,21 +22,29 @@ def helper(plan, goal_description, actor_index, current_state):
     future_pos = []
 
     for i in range(len(plan)):
-        action = plan[i]
-        pos_actor = action[0].calculate_agent_positions(pos_actor)
+        action = plan[i][0]
+        pos_actor = action.calculate_agent_positions(pos_actor)
         future_pos.append(pos_actor)
 
+
     new_goals = []
+    # print("future",future_pos, file=sys.stderr)
     for i in range(len(future_pos)):
         pos = future_pos[i]
-        _, char = current_state.object_at(pos)
+        char = current_state.object_at(pos)
         if char == '':
             pass
         else:
-            new_goal = (pos, char, False)
-            new_goals.append(new_goal)
+            for j in range(i, len(future_pos)):
+                pos = future_pos[j]
+                new_goal = (pos, char, False)
+                goal_description.goals.append(new_goal)
+                new_goals.append(new_goal)
 
-    return goal_description.create_new_goal_description_of_same_type(new_goals)
+
+
+    print("new goals: ", new_goals, file=sys.stderr)
+    return char, goal_description.create_new_goal_description_of_same_type(new_goals)
 
 
 
@@ -82,28 +90,55 @@ def helper_agent_type(level, initial_state, action_library, goal_description, fr
         for action in plan:
             # print(action_set[0][0], file=sys.stderr)
             # print("action",action, file=sys.stderr)
-            
+
 
             joint_action = [action_set[0][0]] * level.num_agents
             joint_action[actor_index] = action[0]
-            print("se her!", joint_action, file=sys.stderr)
+            # print("se her!", joint_action, file=sys.stderr)
 
             print(joint_action_to_string(list(joint_action)), flush=True)
             execution_successes = parse_response(read_line())
 
-
-            print(execution_successes, file=sys.stderr)
             for i, execution_success in enumerate(execution_successes):
-                if execution_success and len(plan) != 0:
+                if i == actor_index:
+
+                    if execution_success and len(plan) != 0:
+                        current_state = current_state.result( [joint_action[i]] )
                         plan = plan[1:]
 
-                if execution_success == False:
+                    else:
+                        char, new_goal_description = helper(plan, goal_description, actor_index, current_state)
 
-                    # if execution sucess for
-                    if i == actor_index:
-                        print("krussedulle", file=sys.stderr)
-                        new_goal_description = helper(plan, goal_description, actor_index, current_state)
-                        planning_success, plan = graph_search(current_state, action_set, new_goal_description, frontier)
+                        helper_set = [[GenericNoOp()]] * level.num_agents
+                        helper_set[1] = action_library
+                        planning_success, helper_plan = graph_search(current_state, helper_set, new_goal_description,
+                                                                    frontier)
+
+                        helper_pi[char] = helper_plan
+                        print(helper_pi, file=sys.stderr)
+
+                        for helper_plan in helper_pi.values():
+                            for helper_action in helper_plan:
+                                print("help",helper_action, file=sys.stderr)
+                                joint_action = [action_set[0][0]] * level.num_agents
+                                joint_action[1] = helper_action[0]
+                                # print("se her!", joint_action, file=sys.stderr)
+
+                                print(joint_action_to_string(list(joint_action)), flush=True)
+                                execution_successes_h = parse_response(read_line())
+
+                                for i, execution_success in enumerate(execution_successes_h):
+                                    current_state = current_state.result([joint_action[i]])
+                                    helper_plan = helper_plan[1:]
+
+
+
+
+                else:
+                    if execution_success == True:
+                        current_state = current_state.result( [joint_action[i]] )
+
+
 
 
     # raise NotImplementedError()
