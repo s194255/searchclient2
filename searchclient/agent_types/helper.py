@@ -23,20 +23,20 @@ def helper(plan, goal_description, actor_index, current_state):
 
     for i in range(len(plan)):
         action = plan[i]
-        pos_actor = action.calculate_agent_positions(pos_actor)
+        pos_actor = action[0].calculate_agent_positions(pos_actor)
         future_pos.append(pos_actor)
 
     new_goals = []
-    for i in range(future_pos):
+    for i in range(len(future_pos)):
         pos = future_pos[i]
-        char = current_state.object_at(pos)
+        _, char = current_state.object_at(pos)
         if char == '':
             pass
         else:
             new_goal = (pos, char, False)
             new_goals.append(new_goal)
 
-    goal_description.create_new_goal_description_of_same_type(new_goals)
+    return goal_description.create_new_goal_description_of_same_type(new_goals)
 
 
 
@@ -68,29 +68,41 @@ def helper_agent_type(level, initial_state, action_library, goal_description, fr
     pi = {}
 
     current_state = initial_state
-    for i, subgoal in enumerate(monochrome_goal_description):
-        planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description, frontier)
+
+    for i in range(monochrome_goal_description.num_sub_goals()):
+        planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description.get_sub_goal(i), frontier)
         pi[i] = plan
         if planning_success == False:
             print("execution faulted", file=sys.stderr)
 
-    for plan in pi:
+    helper_pi = {}
+    for plan in pi.values():
+        # print("pi", pi, file=sys.stderr)
+        # print("plan", plan, file=sys.stderr)
         for action in plan:
-            print(joint_action_to_string([action]), flush=True)
+            # print(action_set[0][0], file=sys.stderr)
+            # print("action",action, file=sys.stderr)
+
+            joint_action = [action_set[0][0]] * level.num_agents
+            joint_action[actor_index] = action[0]
+            print("se her!", joint_action, file=sys.stderr)
+
+            print(joint_action_to_string(list(joint_action)), flush=True)
             execution_successes = parse_response(read_line())
 
-            if execution_successes[0] == False:
 
-                next_pos = action.calculate_positions(current_state.agent_positions[actor_index][0])
+            print(execution_successes, file=sys.stderr)
+            for i, execution_success in enumerate(execution_successes):
+                if execution_success and len(plan) != 0:
+                        plan = plan[1:]
 
-                obstacle_idx, obstacle_char = current_state.object_at(next_pos)
+                if execution_success == False:
 
-
-
-
-
-
-
+                    # if execution sucess for
+                    if i == actor_index:
+                        print("krussedulle", file=sys.stderr)
+                        new_goal_description = helper(plan, goal_description, actor_index, current_state)
+                        planning_success, plan = graph_search(current_state, action_set, new_goal_description, frontier)
 
 
     # raise NotImplementedError()
