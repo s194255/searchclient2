@@ -80,6 +80,9 @@ class MoveAction:
     def calculate_positions(self, current_agent_position: Position) -> Position:
         return pos_add(current_agent_position, self.agent_delta)
 
+    def calculate_agent_positions(self, current_agent_position: Position) -> Position:
+        return pos_add(current_agent_position, self.agent_delta)
+
     def is_applicable(self, agent_index: int, state: h_state.HospitalState) -> bool:
         current_agent_position, _ = state.agent_positions[agent_index]
         new_agent_position = self.calculate_positions(current_agent_position)
@@ -110,6 +113,9 @@ class PullAction:
         self.name = "Pull({0},{1})".format(agent_direction, box_direction)  # pull(agent_dir, box_dir)
 
     def calculate_positions(self, current_agent_position: Position) -> Position:
+        return pos_add(current_agent_position, self.agent_delta)
+
+    def calculate_agent_positions(self, current_agent_position: Position) -> Position:
         return pos_add(current_agent_position, self.agent_delta)
 
     def is_applicable(self, agent_index: int, state: h_state.HospitalState) -> bool:
