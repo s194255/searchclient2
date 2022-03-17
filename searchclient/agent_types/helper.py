@@ -16,26 +16,29 @@ from search_algorithms.graph_search import graph_search
 from utils import *
 
 
-
-def helper(plan, goal_description, actor_index, current_state):
+def helper(plan, goal_description, actor_index, current_state, initial_goal_description):
     pos_actor, actor_char = current_state.agent_positions[actor_index]
     future_pos = []
 
     for i in range(len(plan)):
-        action = plan[i]
-        pos_actor = action[0].calculate_agent_positions(pos_actor)
+        action = plan[i][0]
+        pos_actor = action.calculate_agent_positions(pos_actor)
         future_pos.append(pos_actor)
 
-    new_goals = []
+
+    new_goals = initial_goal_description.goals
+    print(future_pos, file=sys.stderr)
     for i in range(len(future_pos)):
         pos = future_pos[i]
-        _, char = current_state.object_at(pos)
+        char = current_state.object_at(pos)
         if char == '':
             pass
         else:
             new_goal = (pos, char, False)
+            goal_description.goals.append(new_goal)
             new_goals.append(new_goal)
 
+    print("new goals: ", new_goals, file=sys.stderr)
     return goal_description.create_new_goal_description_of_same_type(new_goals)
 
 
