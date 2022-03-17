@@ -17,6 +17,27 @@ from utils import *
 
 
 
+def helper(plan, goal_description, actor_index, current_state):
+    pos_actor, actor_char = current_state.agent_positions[actor_index]
+    future_pos = []
+
+    for i in range(len(plan)):
+        action = plan[i]
+        pos_actor = action.calculate_agent_positions(pos_actor)
+        future_pos.append(pos_actor)
+
+    new_goals = []
+    for i in range(future_pos):
+        pos = future_pos[i]
+        char = current_state.object_at(pos)
+        if char == '':
+            pass
+        else:
+            new_goal = (pos, char, False)
+            new_goals.append(new_goal)
+
+    goal_description.create_new_goal_description_of_same_type(new_goals)
+
 
 
 def helper_agent_type(level, initial_state, action_library, goal_description, frontier):
