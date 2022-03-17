@@ -82,6 +82,7 @@ def helper_agent_type(level, initial_state, action_library, goal_description, fr
         for action in plan:
             # print(action_set[0][0], file=sys.stderr)
             # print("action",action, file=sys.stderr)
+            
 
             joint_action = [action_set[0][0]] * level.num_agents
             joint_action[actor_index] = action[0]
