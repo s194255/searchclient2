@@ -14,23 +14,36 @@
 from domains.hospital import HospitalGoalDescription
 from search_algorithms.graph_search import graph_search
 from utils import *
+import time
+import copy
 
 
-def helper(plan, goal_description, actor_index, current_state, initial_goal_description):
+def helper(plan, goal_description, actor_index, current_state):
     pos_actor, actor_char = current_state.agent_positions[actor_index]
-    future_pos = []
 
+    # get future positions according to the plan
+    future_pos = []
     for i in range(len(plan)):
         action = plan[i][0]
         pos_actor = action.calculate_agent_positions(pos_actor)
         future_pos.append(pos_actor)
 
-            new_goal = (pos, char, False)
-            goal_description.goals.append(new_goal)
-            new_goals.append(new_goal)
 
-    print("new goals: ", new_goals, file=sys.stderr)
-    return goal_description.create_new_goal_des
+
+    new_goals = []
+    for i in range(len(future_pos)):
+        pos = future_pos[i]
+        char = current_state.object_at(pos)
+        if char == '':
+            pass
+        else:
+            for j in range(i,len(future_pos)):
+                pos = future_pos[j]
+                new_goal = (pos, char, False)
+                # goal_description.goals.append(new_goal)
+                new_goals.append(new_goal)
+
+    return goal_description.create_new_goal_description_of_same_type(new_goals)
 
 
 
@@ -53,78 +66,80 @@ def helper_agent_type(level, initial_state, action_library, goal_description, fr
 
     action_set = [[GenericNoOp()]] * level.num_agents
     action_set[actor_index] = action_library
+    # action_set = [action_library] * level.num_agents
 
 
-    num_helpers = level.num_agents-1
+    #Get color of the actor
     actor_color = level.colors["0"]
+    #Get the monochrome problem
     monochrome_problem = initial_state.color_filter(actor_color)
     monochrome_goal_description = goal_description.color_filter(actor_color)
-    pi = {}
+
 
     current_state = initial_state
-
-    for i in range(monochrome_goal_description.num_sub_goals()):
-        planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description.get_sub_goal(i), frontier)
-        pi[i] = plan
-        if planning_success == False:
-            print("execution faulted", file=sys.stderr)
-
-    helper_pi = {}
-    for plan in pi.values():
-        # print("pi", pi, file=sys.stderr)
-        # print("plan", plan, file=sys.stderr)
-        for action in plan:
-            # print(action_set[0][0], file=sys.stderr)
-            # print("action",action, file=sys.stderr)
+    planning_success, actor_plan = graph_search(monochrome_problem, action_set, monochrome_goal_description, frontier)
+    if planning_success == False:
+        print("execution faulted", file=sys.stderr)
 
 
-            joint_action = [action_set[0][0]] * level.num_agents
-            joint_action[actor_index] = action[0]
-            # print("se her!", joint_action, file=sys.stderr)
+    for time_step in range(len(actor_plan)):
+        actor_action = actor_plan[time_step]
 
-            print(joint_action_to_string(list(joint_action)), flush=True)
+        #loop until actor is allowed perform an action
+        while True:
+
+            #loop through all agents. Get joint_action (some of those actions might be illegal)
+            joint_action = []
+            for i in range(level.num_agents):
+                agent_pos, agent_char = current_state.agent_positions[i]
+
+                #If agent is a helper
+                if agent_char != "0":
+                    helper_color = level.colors[agent_char]
+
+                    #only the helper is allowed to move
+                    action_set_helper = [[GenericNoOp()]] * level.num_agents
+                    action_set_helper[i] = action_library
+
+                    #The helper only has to deal with the goals relevant for her
+                    monochrome_goal_description_helper = goal_description.color_filter(helper_color)
+                    planning_success, plan = graph_search(current_state, action_set_helper,
+                                                          monochrome_goal_description_helper, frontier)
+
+                    #If plan is empty, just do GenericNoOp()
+                    if len(plan) == 0:
+                        joint_action.append(GenericNoOp())
+                    else:
+                        #get action in plan corresponding to that helper. All the other agents are doing GenericNoOp()
+                        helper_action = plan[0][i]
+                        joint_action.append(helper_action)
+                elif agent_char == "0":
+                    joint_action.append(actor_action[0])
+
+            # pass the joint_action to the server
+            print(joint_action_to_string(joint_action), flush=True)
             execution_successes = parse_response(read_line())
 
-            for i, execution_success in enumerate(execution_successes):
-                if i == actor_index:
+            # applicable actions will be used to update current_state
+            applicable_actions = []
+            for i in range(level.num_agents):
+                if execution_successes[i] == False:
 
-                    if execution_success and len(plan) != 0:
-                        current_state = current_state.result( [joint_action[i]] )
-                        plan = plan[1:]
-
-                    else:
-                        char, new_goal_description = helper(plan, goal_description, actor_index, current_state)
-
-                        helper_set = [[GenericNoOp()]] * level.num_agents
-                        helper_set[1] = action_library
-                        planning_success, helper_plan = graph_search(current_state, helper_set, new_goal_description,
-                                                                    frontier)
-
-                        helper_pi[char] = helper_plan
-                        print(helper_pi, file=sys.stderr)
-
-                        for helper_plan in helper_pi.values():
-                            for helper_action in helper_plan:
-                                print("help",helper_action, file=sys.stderr)
-                                joint_action = [action_set[0][0]] * level.num_agents
-                                joint_action[1] = helper_action[0]
-                                # print("se her!", joint_action, file=sys.stderr)
-
-                                print(joint_action_to_string(list(joint_action)), flush=True)
-                                execution_successes_h = parse_response(read_line())
-
-                                for i, execution_success in enumerate(execution_successes_h):
-                                    current_state = current_state.result([joint_action[i]])
-                                    helper_plan = helper_plan[1:]
-
-
-
-
+                    # if action is illegal, just do GenericNoOp()
+                    applicable_actions.append(GenericNoOp())
+                    if i == actor_index:
+                        #actor requests help from her helpers
+                        goal_description = helper(actor_plan[time_step:], goal_description, actor_index, current_state)
                 else:
-                    if execution_success == True:
-                        current_state = current_state.result( [joint_action[i]] )
+                    applicable_actions.append(joint_action[i])
+
+            #current_state is updated based on legal moves only
+            current_state = current_state.result(applicable_actions)
+
+            #If actor managed to do her action, move on to next time step
+            if execution_successes[actor_index] == True:
+                print("jeg lavede en handling", file=sys.stderr)
+                break
 
 
 
-
-    # raise NotImplementedError()
