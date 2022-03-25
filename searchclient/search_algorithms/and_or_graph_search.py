@@ -14,41 +14,43 @@
 import sys
 from copy import deepcopy
 
-def OR_search(state, problem, path, results, action_set):
+def OR_search(state, problem, path, results, action_set,d):
     # print("or search", file=sys.stderr)
     if problem.is_goal(state):
-        print("malthe")
         return {}
     if state in path:
         return False
+
+    if d == 0:
+        return False
     actions = state.get_applicable_actions(action_set)
-    print("actions!!!:", actions, file=sys.stderr)
+    # print("actions!!!:", actions, file=sys.stderr)
     for action in actions:
-        plan = AND_search(results(state, action), problem, [state] + path, results, action_set)
+        plan = AND_search(results(state, action), problem, [state] + path, results, action_set,d)
         if plan != False:
             plan[state] = action
-            print("børge",plan, file=sys.stderr)
+            # print("børge",plan, file=sys.stderr)
             return plan
     return False
 
-def AND_search(states, problem, path, results, action_set):
+def AND_search(states, problem, path, results, action_set,d):
     # print("and search", file=sys.stderr)
     plan = {}
     for i in range(len(states)):
         s = states[i]
-        plan[s] = OR_search(s, problem, path, results, action_set)
+        plan[s] = OR_search(s, problem, path, results, action_set,d-1)
         if plan[s] == False:
             return False
         return plan[s]
 
 
 def and_or_graph_search(initial_state, action_set, goal_description, results):
-    d = 1000
+    d = 15
 
     # Here you should implement AND-OR-GRAPH-SEARCH. We are going to use a policy format, mapping from states to actions.
     # The algorithm should return a pair (worst_case_length, or_plan)
     # where the or_plan is a dictionary with states as keys and actions as values
-    or_plan = OR_search(initial_state, goal_description, [], results, action_set)
+    or_plan = OR_search(initial_state, goal_description, [], results, action_set, d)
     if or_plan == False:
         d = None
     # print(or_plan, file=sys.stderr)
