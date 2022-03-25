@@ -96,6 +96,7 @@ def helper_agent_type(level, initial_state, action_library, goal_description, fr
 
                 #loop through all agents. Get joint_action (some of those actions might be illegal)
                 print("bøøøøørge", goal_description, file=sys.stderr)
+                print("bøøøøørge", current_state, file=sys.stderr)
 
                 joint_action = []
                 for i in range(level.num_agents):
@@ -134,9 +135,8 @@ def helper_agent_type(level, initial_state, action_library, goal_description, fr
                     if execution_successes[i] == False:
 
                         # if action is illegal, just do GenericNoOp()
-                        if i != actor_index:
-                            applicable_actions.append(GenericNoOp())
-                        elif i == actor_index:
+                        applicable_actions.append(GenericNoOp())
+                        if i == actor_index:
                             #actor requests help from her helpers
                             goal_description = helper(actor_plan[time_step:], goal_description, actor_index, current_state)
                     else:
