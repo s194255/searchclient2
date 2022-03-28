@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import random
-from search_algorithms.and_or_graph_search import and_or_graph_search
+from search_algorithms.and_or_graph_search import cyclic_and_or_graph_search
 from utils import *
 
 
@@ -27,14 +27,16 @@ def broken_results(state, action):
     else:
         return [standard_case]
 
-CHANCE_OF_EXTRA_ACTION = 1
+CHANCE_OF_EXTRA_ACTION = 0.5
 
-def non_deterministic_agent_type(level, initial_state, action_library, goal_description):
+def non_deterministic_advanced_agent_type(level, initial_state, action_library, goal_description):
     # Create an action set for a single agent.
+    action_library = action_library[0:17] # remove the push actions
     action_set = [action_library]
+    print(action_library[0:17], file=sys.stderr)
 
     # Call AND-OR-GRAPH-SEARCH to compute a conditional plan
-    worst_case_length, plan = and_or_graph_search(initial_state, action_set, goal_description, broken_results)
+    worst_case_length, plan = cyclic_and_or_graph_search(initial_state, action_set, goal_description, broken_results)
 
     if worst_case_length is None:
         print("Failed to find strong plan!", file=sys.stderr)

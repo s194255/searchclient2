@@ -19,6 +19,7 @@ from agent_types.classic import classic_agent_type
 from agent_types.decentralised import decentralised_agent_type
 from agent_types.helper import helper_agent_type
 from agent_types.non_deterministic import non_deterministic_agent_type
+from agent_types.non_deterministic_advanced import non_deterministic_advanced_agent_type
 from domains.hospital import *
 from strategies.bfs import FrontierBFS
 from strategies.dfs import FrontierDFS
@@ -82,6 +83,8 @@ def parse_command_line_arguments():
                                   help='Use a helper agent type.')
     agent_type_group.add_argument('-nondeterministic', action='store_const', dest='agent_type', const='nondeterministic',
                                   help='Use a non deterministic agent type.')
+    agent_type_group.add_argument('-nondeterministic_advanced', action='store_const', dest='agent_type', const='nondeterministic_advanced',
+                                  help='Use a non determinstic advanced agent type.')
 
 
     args = parser.parse_args()
@@ -175,6 +178,8 @@ if __name__ == '__main__':
         helper_agent_type(level, initial_state, action_library, goal_description, frontier)
     elif agent_type_name == 'nondeterministic':
         non_deterministic_agent_type(level, initial_state, action_library, goal_description)
+    elif agent_type_name == 'nondeterministic_advanced':
+        non_deterministic_advanced_agent_type(level, initial_state, action_library, goal_description)
     else:
         print(f"Unrecognized agent type! {agent_type_name}", file=sys.stderr)
 
