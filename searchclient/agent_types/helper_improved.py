@@ -57,9 +57,32 @@ def helper(plan, level, actor_index, current_state, actor_goal_description):
     return HospitalGoalDescription(level, new_goals)
 
 
-def get_rogue_helper():
-    pass
-    #return color, char, idx
+def get_conflicting_helper(current_state, plan, agent_idx, level):
+    agent_pos, agent_char = current_state.agent_positions[agent_idx]
+
+    # Get color of the actor
+    agent_color = level.colors[agent_char]
+
+    future_pos = []
+    for i in range(2):
+        action = plan[i][agent_idx]
+        pos_actor = action.calculate_agent_positions(pos_actor)
+        future_pos.append(pos_actor)
+
+    helper_char = current_state.object_at(future_pos[0])
+
+    if level.colors[helper_char] == agent_color:
+        helper_char = current_state.object_at(future_pos[1])
+
+    helper_color = level.colors[helper_char]
+    for i in range(level.num_agents):
+        _, temp_char = current_state.agent_positions[i]
+        if temp_char == helper_char:
+            helper_idx = i
+
+    # todo: Kasser er ikke implementeret
+
+    return helper_color, helper_char, helper_idx
 
 
 
@@ -90,11 +113,13 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
 
     for index in range(goal_description.num_sub_goals()):
         colors = [actor_color]
+        indices = [actor_index]
         action_set = [[GenericNoOp()]] * level.num_agents
         action_set[actor_index] = action_library
 
         sub_goal = goal_description.get_sub_goal(index)
 
+        #while sub_goal is not solved
         while True:
 
             #Get the monochrome problem
@@ -106,7 +131,14 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
             if planning_success == False:
                 print("execution faulted", file=sys.stderr)
 
-            for time_step in range(len(plan)):
+            if (planning_success == True) and (len(plan) == 0):
+                break
+
+
+
+            # while actor succeeds in actions
+            time_step = 0
+            while True:
                 joint_action = plan[time_step]
                 # pass the joint_action to the server
                 print(joint_action_to_string(joint_action), flush=True)
@@ -119,11 +151,11 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
                         # if action is illegal, just do GenericNoOp()
                         applicable_actions.append(GenericNoOp())
 
-                        if i == actor_index:
-                            color_rogue, char_rogue, idx_rogue = get_rogue_helper()
-                            colors.append(color_rogue)
-                            action_set[idx_rogue] = action_library
-
+                        if i in indices:
+                            color_conflict, char_conflict, idx_conflict = get_conflicting_helper(current_state, plan)
+                            colors.append(color_conflict)
+                            indices.append(idx_conflict)
+                            action_set[idx_conflict] = action_library
 
                     else:
                         applicable_actions.append(joint_action[i])
@@ -132,10 +164,16 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
                 current_state = current_state.result(applicable_actions)
                 print(current_state, file=sys.stderr)
 
-                # If actor managed to do her action, move on to next time step
-                if execution_successes[actor_index] == True:
-                    # print("jeg lavede en handling", file=sys.stderr)
+                time_step += 1
+
+                # If actor failed action, then we have to replan
+                if execution_successes[actor_index] == False:
+                    print("jeg fejlede en handling", file=sys.stderr)
                     break
+
+
+
+
 
 
 
