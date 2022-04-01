@@ -58,6 +58,9 @@ class NoOpAction:
         # Optimization. NoOp can never change the state if we only have a single agent
         return len(state.agent_positions) > 1
 
+    def calculate_agent_positions(self, current_agent_position: Position) -> Position:
+        return current_agent_position
+
     def result(self, agent_index: int, state: h_state.HospitalState):
         pass
 

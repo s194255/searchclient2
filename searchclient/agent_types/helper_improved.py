@@ -52,42 +52,84 @@ def helper(plan, level, actor_index, current_state, actor_goal_description):
             for (actor_goal_pos, _, _) in actor_goal_description.goals:
                 new_goals.append((actor_goal_pos, char, False))
 
-            print(new_goals, file=sys.stderr)
+            # print(new_goals, file=sys.stderr)
 
     return HospitalGoalDescription(level, new_goals)
 
 
-def get_conflicting_helper(current_state, plan, agent_idx, level):
+def get_conflicting_helper(current_state, plan, agent_idx, level, time_step):
     agent_pos, agent_char = current_state.agent_positions[agent_idx]
 
     # Get color of the actor
     agent_color = level.colors[agent_char]
 
     future_pos = []
-    for i in range(2):
+    for i in range(time_step, time_step+2):
         action = plan[i][agent_idx]
+        print("action", action, file=sys.stderr)
         agent_pos = action.calculate_agent_positions(agent_pos)
         future_pos.append(agent_pos)
 
-    helper_char = current_state.object_at(future_pos[0])
 
+    #quick check to see if we are bumping into our own box
+    temp_char = current_state.object_at(future_pos[0])
+    temp_color = level.colors[temp_char]
 
-    if helper_char == '':
-        return False, False, False
+    if temp_color == agent_color:
+        box_idx, box_char = current_state.box_at(future_pos[1])
+        helper_idx, helper_char = current_state.agent_at(future_pos[1])
+
     else:
+        box_idx, box_char = current_state.box_at(future_pos[0])
+        helper_idx, helper_char = current_state.agent_at(future_pos[0])
 
-        if level.colors[helper_char] == agent_color:
-            helper_char = current_state.object_at(future_pos[1])
+
+
+    if box_char == '':
+        #we know it is a helper
 
         helper_color = level.colors[helper_char]
-        for i in range(level.num_agents):
-            _, temp_char = current_state.agent_positions[i]
-            if temp_char == helper_char:
-                helper_idx = i
-
-        # todo: Kasser er ikke implementeret
-
         return helper_color, helper_char, helper_idx
+
+
+    elif helper_char == '':
+        # we now it is a box
+        box_color = level.colors[box_char]
+        # print("kassen har den her farve", box_color, file=sys.stderr)
+        for i in range(level.num_agents):
+            _, helper_char = current_state.agent_positions[i]
+            helper_color = level.colors[helper_char]
+            if helper_color == box_color:
+                print("kalder på agent med farve {}".format(helper_color), file=sys.stderr)
+                helper_idx = i
+                break
+        return helper_color, helper_char, helper_idx
+
+    else:
+        return False, False, False
+
+
+    # helper_char = current_state.object_at(future_pos[0])
+    #
+    #
+    # if helper_char == '':
+    #     return False, False, False
+    # else:
+    #
+    #     if level.colors[helper_char] == agent_color:
+    #         helper_char = current_state.object_at(future_pos[1])
+    #
+    #
+    #
+    #     helper_color = level.colors[helper_char]
+    #     for i in range(level.num_agents):
+    #         _, temp_char = current_state.agent_positions[i]
+    #         if temp_char == helper_char:
+    #             helper_idx = i
+    #
+
+    #
+    #     return helper_color, helper_char, helper_idx
 
 def get_joint_action(plan, time_step, indices, level, current_state):
     # print("-------------", file=sys.stderr)
@@ -95,6 +137,8 @@ def get_joint_action(plan, time_step, indices, level, current_state):
     # print(time_step, file=sys.stderr)
     # print(indices, file=sys.stderr)
     # print("-------------", file=sys.stderr)
+
+
 
     joint_action = []
     for agent_idx in range(level.num_agents):
@@ -106,9 +150,41 @@ def get_joint_action(plan, time_step, indices, level, current_state):
 
     return joint_action
 
+def convert_plan(plan, current_state, monochrome_state):
+    #fra mono til current
+    idx_dict = {}
+    n_m = len(monochrome_state.agent_positions)
+    n_c = len(current_state.agent_positions)
+
+    for i in range(n_m):
+        _, char = monochrome_state.agent_positions[i]
+        for j in range(n_c):
+            _, char_temp = current_state.agent_positions[j]
+            if char == char_temp:
+                idx_dict[i] = j
+
+    korrigeret_plan = []
+    for tidsskridt in plan:
+
+        joint_action = [GenericNoOp()] * n_c
+        for mono_idx in idx_dict.keys():
+            handling = tidsskridt[mono_idx]
+
+            curr_idx = idx_dict[mono_idx]
+            joint_action[curr_idx] = handling
+        korrigeret_plan.append(joint_action)
+    return korrigeret_plan
 
 
-def helper_improved_agent_type(level, initial_state, action_library, goal_description, frontier):
+    # for i in range(current_state.agent_positions):
+    #     pos, char = current_state.agent_positions[i]
+    #
+    #     for j in range(monochrome_state.agent_positions):
+    #         pos_temp, char_temp = current_state.agent_positions[i]
+
+
+
+def helper_improved_agent_type(level, initial_state, action_library, actor_goal_description, frontier):
 
     # Here you should implement the HELPER-AGENT algorithm.
     # Some tips are:
@@ -132,29 +208,35 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
     actor_color = level.colors["0"]
     current_state = initial_state
 
+    goals = []
 
-    for index in range(goal_description.num_sub_goals()):
-        colors = [actor_color]
+
+    for sub_goal in actor_goal_description.goals:
+        colors = set([actor_color])
         indices = [actor_index]
-        action_set = [[GenericNoOp()]] * level.num_agents
-        action_set[actor_index] = action_library
+        # action_set = [[GenericNoOp()]] * level.num_agents
+        # action_set[actor_index] = action_library
 
-        sub_goal = goal_description.get_sub_goal(index)
+        goals.append(sub_goal)
+        goal_description = HospitalGoalDescription(level, goals)
 
         #while sub_goal is not solved
         while True:
 
             #Get the monochrome problem
             monochrome_problem = current_state.color_filters(colors)
-            monochrome_goal_description = sub_goal.color_filters(colors)
+            monochrome_goal_description = goal_description.color_filters(colors)
 
-            print("-------------", file=sys.stderr)
-            print(action_set, file=sys.stderr)
-            print(len(action_set), file=sys.stderr)
-            print("-------------", file=sys.stderr)
+            action_set = [action_library] * len(monochrome_problem.agent_positions)
 
+            print("-------------",file=sys.stderr)
+            print("mono state", monochrome_problem, file=sys.stderr)
+            print("colors", colors, file=sys.stderr)
+            print("action set", action_set, file=sys.stderr)
+            print("-------------", file=sys.stderr)
 
             planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description, frontier)
+            plan = convert_plan(plan, current_state, monochrome_problem)
 
             if planning_success == False:
                 print("execution faulted", file=sys.stderr)
@@ -166,9 +248,12 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
 
             # while actor succeeds in actions
             time_step = 0
-            while True:
+            while time_step < len(plan):
                 # print(plan, file=sys.stderr)
                 joint_action = get_joint_action(plan, time_step, indices, level, current_state)
+                # print("---------", file=sys.stderr)
+                # print("joint action", joint_action, file=sys.stderr)
+                # print("---------", file=sys.stderr)
                 # pass the joint_action to the server
                 print(joint_action_to_string(joint_action), flush=True)
                 execution_successes = parse_response(read_line())
@@ -181,11 +266,14 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
                         applicable_actions.append(GenericNoOp())
 
                         if agent_idx in indices:
-                            color_conflict, char_conflict, idx_conflict = get_conflicting_helper(current_state, plan, agent_idx, level)
+                            print("agent {} har et problem".format(agent_idx), file=sys.stderr)
+                            color_conflict, char_conflict, idx_conflict = get_conflicting_helper(current_state, plan,
+                                                                                                 agent_idx, level, time_step)
+                            print("color conflict {}".format(color_conflict), file=sys.stderr)
                             if color_conflict != False:
-                                colors.append(color_conflict)
+                                colors.add(color_conflict)
                                 indices.append(idx_conflict)
-                                action_set[idx_conflict] = action_library
+                                # action_set[idx_conflict] = action_library
 
                     else:
                         applicable_actions.append(joint_action[agent_idx])
