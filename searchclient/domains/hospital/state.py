@@ -204,6 +204,25 @@ class HospitalState:
 
         return HospitalState(self.level, filtered_agent_positions, filtered_box_positions)
 
+    def color_filters(self, colors):
+        """
+        Colors: color of agents for monochrome problem
+        Returns a copy of the current state where all entities, of another color than the colors passed as an argument,
+        has been removed
+        """
+        filtered_agent_positions = []
+        filtered_box_positions = []
+        for color in colors:
+            for (agent_position, agent_char) in self.agent_positions:
+                if self.level.colors[agent_char] == color:
+                    filtered_agent_positions.append((agent_position, agent_char))
+
+            for (box_position, box_char) in self.box_positions:
+                if self.level.colors[box_char] == color:
+                    filtered_box_positions.append((box_position, box_char))
+
+        return HospitalState(self.level, filtered_agent_positions, filtered_box_positions)
+
     def __repr__(self) -> str:
         lines = []
         lookup_table = {}
