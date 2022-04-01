@@ -57,6 +57,11 @@ def helper(plan, level, actor_index, current_state, actor_goal_description):
     return HospitalGoalDescription(level, new_goals)
 
 
+def get_rogue_helper():
+    pass
+    #return color, char, idx
+
+
 
 def helper_improved_agent_type(level, initial_state, action_library, goal_description, frontier):
 
@@ -82,42 +87,55 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
     actor_color = level.colors["0"]
     current_state = initial_state
 
-    colors = [actor_color]
+
     for index in range(goal_description.num_sub_goals()):
+        colors = [actor_color]
+        action_set = [[GenericNoOp()]] * level.num_agents
+        action_set[actor_index] = action_library
+
         sub_goal = goal_description.get_sub_goal(index)
 
-        #Get the monochrome problem
-        monochrome_problem = current_state.color_filters(colors)
-        monochrome_goal_description = sub_goal.color_filters(colors)
+        while True:
 
-        planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description, frontier)
+            #Get the monochrome problem
+            monochrome_problem = current_state.color_filters(colors)
+            monochrome_goal_description = sub_goal.color_filters(colors)
 
-        if planning_success == False:
-            print("execution faulted", file=sys.stderr)
+            planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description, frontier)
 
-        for time_step in range(len(plan)):
-            joint_action = plan[time_step]
-            # pass the joint_action to the server
-            print(joint_action_to_string(joint_action), flush=True)
-            execution_successes = parse_response(read_line())
+            if planning_success == False:
+                print("execution faulted", file=sys.stderr)
 
-            # applicable actions will be used to update current_state
-            applicable_actions = []
-            for i in range(level.num_agents):
-                if execution_successes[i] == False:
-                    # if action is illegal, just do GenericNoOp()
-                    applicable_actions.append(GenericNoOp())
-                else:
-                    applicable_actions.append(joint_action[i])
+            for time_step in range(len(plan)):
+                joint_action = plan[time_step]
+                # pass the joint_action to the server
+                print(joint_action_to_string(joint_action), flush=True)
+                execution_successes = parse_response(read_line())
 
-            # current_state is updated based on legal moves only
-            current_state = current_state.result(applicable_actions)
-            print(current_state, file=sys.stderr)
+                # applicable actions will be used to update current_state
+                applicable_actions = []
+                for i in range(level.num_agents):
+                    if execution_successes[i] == False:
+                        # if action is illegal, just do GenericNoOp()
+                        applicable_actions.append(GenericNoOp())
 
-            # If actor managed to do her action, move on to next time step
-            if execution_successes[actor_index] == True:
-                # print("jeg lavede en handling", file=sys.stderr)
-                break
+                        if i == actor_index:
+                            color_rogue, char_rogue, idx_rogue = get_rogue_helper()
+                            colors.append(color_rogue)
+                            action_set[idx_rogue] = action_library
+
+
+                    else:
+                        applicable_actions.append(joint_action[i])
+
+                # current_state is updated based on legal moves only
+                current_state = current_state.result(applicable_actions)
+                print(current_state, file=sys.stderr)
+
+                # If actor managed to do her action, move on to next time step
+                if execution_successes[actor_index] == True:
+                    # print("jeg lavede en handling", file=sys.stderr)
+                    break
 
 
 
