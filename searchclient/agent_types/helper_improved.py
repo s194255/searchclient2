@@ -66,23 +66,45 @@ def get_conflicting_helper(current_state, plan, agent_idx, level):
     future_pos = []
     for i in range(2):
         action = plan[i][agent_idx]
-        pos_actor = action.calculate_agent_positions(pos_actor)
-        future_pos.append(pos_actor)
+        agent_pos = action.calculate_agent_positions(agent_pos)
+        future_pos.append(agent_pos)
 
     helper_char = current_state.object_at(future_pos[0])
 
-    if level.colors[helper_char] == agent_color:
-        helper_char = current_state.object_at(future_pos[1])
 
-    helper_color = level.colors[helper_char]
-    for i in range(level.num_agents):
-        _, temp_char = current_state.agent_positions[i]
-        if temp_char == helper_char:
-            helper_idx = i
+    if helper_char == '':
+        return False, False, False
+    else:
 
-    # todo: Kasser er ikke implementeret
+        if level.colors[helper_char] == agent_color:
+            helper_char = current_state.object_at(future_pos[1])
 
-    return helper_color, helper_char, helper_idx
+        helper_color = level.colors[helper_char]
+        for i in range(level.num_agents):
+            _, temp_char = current_state.agent_positions[i]
+            if temp_char == helper_char:
+                helper_idx = i
+
+        # todo: Kasser er ikke implementeret
+
+        return helper_color, helper_char, helper_idx
+
+def get_joint_action(plan, time_step, indices, level, current_state):
+    # print("-------------", file=sys.stderr)
+    # print(plan, file=sys.stderr)
+    # print(time_step, file=sys.stderr)
+    # print(indices, file=sys.stderr)
+    # print("-------------", file=sys.stderr)
+
+    joint_action = []
+    for agent_idx in range(level.num_agents):
+        agent_pos, agent_char = current_state.agent_positions[agent_idx]
+        if agent_idx in indices:
+            joint_action.append(plan[time_step][agent_idx])
+        else:
+            joint_action.append(GenericNoOp())
+
+    return joint_action
 
 
 
@@ -126,6 +148,12 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
             monochrome_problem = current_state.color_filters(colors)
             monochrome_goal_description = sub_goal.color_filters(colors)
 
+            print("-------------", file=sys.stderr)
+            print(action_set, file=sys.stderr)
+            print(len(action_set), file=sys.stderr)
+            print("-------------", file=sys.stderr)
+
+
             planning_success, plan = graph_search(monochrome_problem, action_set, monochrome_goal_description, frontier)
 
             if planning_success == False:
@@ -139,30 +167,32 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
             # while actor succeeds in actions
             time_step = 0
             while True:
-                joint_action = plan[time_step]
+                # print(plan, file=sys.stderr)
+                joint_action = get_joint_action(plan, time_step, indices, level, current_state)
                 # pass the joint_action to the server
                 print(joint_action_to_string(joint_action), flush=True)
                 execution_successes = parse_response(read_line())
 
                 # applicable actions will be used to update current_state
                 applicable_actions = []
-                for i in range(level.num_agents):
-                    if execution_successes[i] == False:
+                for agent_idx in range(level.num_agents):
+                    if execution_successes[agent_idx] == False:
                         # if action is illegal, just do GenericNoOp()
                         applicable_actions.append(GenericNoOp())
 
-                        if i in indices:
-                            color_conflict, char_conflict, idx_conflict = get_conflicting_helper(current_state, plan)
-                            colors.append(color_conflict)
-                            indices.append(idx_conflict)
-                            action_set[idx_conflict] = action_library
+                        if agent_idx in indices:
+                            color_conflict, char_conflict, idx_conflict = get_conflicting_helper(current_state, plan, agent_idx, level)
+                            if color_conflict != False:
+                                colors.append(color_conflict)
+                                indices.append(idx_conflict)
+                                action_set[idx_conflict] = action_library
 
                     else:
-                        applicable_actions.append(joint_action[i])
+                        applicable_actions.append(joint_action[agent_idx])
 
                 # current_state is updated based on legal moves only
                 current_state = current_state.result(applicable_actions)
-                print(current_state, file=sys.stderr)
+                # print(current_state, file=sys.stderr)
 
                 time_step += 1
 
@@ -189,38 +219,38 @@ def helper_improved_agent_type(level, initial_state, action_library, goal_descri
 
 
 
-
-
-
-            #loop until actor is allowed perform an action
-            while True:
-                #loop through all agents. Get joint_action (some of those actions might be illegal)
-                joint_action = []
-                for i in range(level.num_agents):
-                    agent_pos, agent_char = current_state.agent_positions[i]
-
-                    #If agent is a helper
-                    if agent_char != "0":
-                        helper_color = level.colors[agent_char]
-
-                        #only the helper is allowed to move
-                        action_set_helper = [[GenericNoOp()]] * level.num_agents
-                        action_set_helper[i] = action_library
-
-                        #The helper only has to deal with the goals relevant for her
-                        monochrome_goal_description_helper = helper_goal_description.color_filter(helper_color)
-                        planning_success, plan = graph_search(current_state, action_set_helper,
-                                                              monochrome_goal_description_helper, frontier)
-
-                        #If plan is empty, just do GenericNoOp()
-                        if len(plan) == 0:
-                            joint_action.append(GenericNoOp())
-                        else:
-                            #get action in plan corresponding to that helper. All the other agents are doing GenericNoOp()
-                            helper_action = plan[0][i]
-                            joint_action.append(helper_action)
-                    elif agent_char == "0":
-                        joint_action.append(actor_action[0])
+            #
+            #
+            #
+            # #loop until actor is allowed perform an action
+            # while True:
+            #     #loop through all agents. Get joint_action (some of those actions might be illegal)
+            #     joint_action = []
+            #     for i in range(level.num_agents):
+            #         agent_pos, agent_char = current_state.agent_positions[i]
+            #
+            #         #If agent is a helper
+            #         if agent_char != "0":
+            #             helper_color = level.colors[agent_char]
+            #
+            #             #only the helper is allowed to move
+            #             action_set_helper = [[GenericNoOp()]] * level.num_agents
+            #             action_set_helper[i] = action_library
+            #
+            #             #The helper only has to deal with the goals relevant for her
+            #             monochrome_goal_description_helper = helper_goal_description.color_filter(helper_color)
+            #             planning_success, plan = graph_search(current_state, action_set_helper,
+            #                                                   monochrome_goal_description_helper, frontier)
+            #
+            #             #If plan is empty, just do GenericNoOp()
+            #             if len(plan) == 0:
+            #                 joint_action.append(GenericNoOp())
+            #             else:
+            #                 #get action in plan corresponding to that helper. All the other agents are doing GenericNoOp()
+            #                 helper_action = plan[0][i]
+            #                 joint_action.append(helper_action)
+            #         elif agent_char == "0":
+            #             joint_action.append(actor_action[0])
 
 
 
