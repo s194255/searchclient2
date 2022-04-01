@@ -27,7 +27,7 @@ def broken_results(state, action):
     else:
         return [standard_case]
 
-CHANCE_OF_EXTRA_ACTION = 1
+CHANCE_OF_EXTRA_ACTION = 0.5
 
 def non_deterministic_agent_type(level, initial_state, action_library, goal_description):
     # Create an action set for a single agent.
@@ -52,7 +52,7 @@ def non_deterministic_agent_type(level, initial_state, action_library, goal_desc
         if current_state not in plan:
             # The agent reached a state not covered by the plan; AND-OR-GRAPH-SEARCH failed.
             print(f"Reached state not covered by plan!\n{current_state}", file=sys.stderr)
-            print("The plan:", plan, file=sys.stderr)
+            # print("The plan:", plan, file=sys.stderr)
             break
 
         # Otherwise, read the correct action to execute

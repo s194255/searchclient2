@@ -28,7 +28,7 @@ def OR_search(state, problem, path, results, action_set,d):
         plan = AND_search(results(state, action), problem, [state] + path, results, action_set,d)
         if plan != False:
             plan[state] = action
-            print(plan, file=sys.stderr)
+            # print(plan, file=sys.stderr)
             # print("chips", file=sys.stderr)
             return plan
     return False
@@ -37,18 +37,19 @@ def AND_search(states, problem, path, results, action_set,d):
     # print("and search", file=sys.stderr)
     plan = {}
     for i in range(len(states)):
-        print(states)
         s = states[i]
-        plan[s] = OR_search(s, problem, path, results, action_set,d-1)
-        if plan[s] == False:
+        p = OR_search(s, problem, path, results, action_set,d-1)
+        if p != False:
+            plan.update(OR_search(s, problem, path, results, action_set,d-1))
+        if p == False:
             return False
-        print(plan, file=sys.stderr)
-        print("chips2", file=sys.stderr)
-        return plan[s]
+        # print(plan, file=sys.stderr)
+        # print("chips2", file=sys.stderr)
+    return plan
 
 
 def and_or_graph_search(initial_state, action_set, goal_description, results):
-    d = 5
+    d = 12
 
     # Here you should implement AND-OR-GRAPH-SEARCH. We are going to use a policy format, mapping from states to actions.
     # The algorithm should return a pair (worst_case_length, or_plan)
@@ -83,14 +84,15 @@ def cyclic_AND_search(states, problem, path, results, action_set, d):
     plan = {}
     for i in range(len(states)):
         s = states[i]
-        plan[s] = OR_search(s, problem, path, results, action_set,d-1)
-        if plan[s] == False:
+        p = cyclic_OR_search(s, problem, path, results, action_set,d-1)
+        if p != False:
+            plan.update(OR_search(s, problem, path, results, action_set,d-1))
+        if p == False:
             pass
-        else:
-            return plan[s]
+    return plan
 
 def cyclic_and_or_graph_search(initial_state, action_set, goal_description, results):
-    d = 116
+    d = 12
 
     # Here you should implement AND-OR-GRAPH-SEARCH. We are going to use a policy format, mapping from states to actions.
     # The algorithm should return a pair (worst_case_length, or_plan)
