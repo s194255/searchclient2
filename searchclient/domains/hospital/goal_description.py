@@ -53,6 +53,15 @@ class HospitalGoalDescription:
 
         return HospitalGoalDescription(self.level, filtered_goals)
 
+    def color_filters(self, colors):
+        """Creates a copy of the goal descriptions where all entities of another color has been removed"""
+        filtered_goals = []
+        for goal in self.goals:
+            if self.level.colors[goal[1]] in colors:
+                filtered_goals.append(goal)
+
+        return HospitalGoalDescription(self.level, filtered_goals)
+
     def get_sub_goal(self, index):
         """
         This function allow each sub goal to be considered one at a time.
