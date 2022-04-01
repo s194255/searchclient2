@@ -18,6 +18,7 @@ import sys
 from agent_types.classic import classic_agent_type
 from agent_types.decentralised import decentralised_agent_type
 from agent_types.helper import helper_agent_type
+from agent_types.helper_improved import helper_improved_agent_type
 from agent_types.non_deterministic import non_deterministic_agent_type
 from agent_types.non_deterministic_advanced import non_deterministic_advanced_agent_type
 from domains.hospital import *
@@ -81,6 +82,8 @@ def parse_command_line_arguments():
                                   help='Use a decentralised agent type.')
     agent_type_group.add_argument('-helper', action='store_const', dest='agent_type', const='helper',
                                   help='Use a helper agent type.')
+    agent_type_group.add_argument('-helper_improved', action='store_const', dest='agent_type', const='helper_improved',
+                                  help='Use an improved helper agent type.')
     agent_type_group.add_argument('-nondeterministic', action='store_const', dest='agent_type', const='nondeterministic',
                                   help='Use a non deterministic agent type.')
     agent_type_group.add_argument('-nondeterministic_advanced', action='store_const', dest='agent_type', const='nondeterministic_advanced',
@@ -176,6 +179,8 @@ if __name__ == '__main__':
         decentralised_agent_type(level, initial_state, action_library, goal_description, frontier)
     elif agent_type_name == 'helper':
         helper_agent_type(level, initial_state, action_library, goal_description, frontier)
+    elif agent_type_name == 'helper_improved':
+        helper_improved_agent_type(level, initial_state, action_library, goal_description, frontier)
     elif agent_type_name == 'nondeterministic':
         non_deterministic_agent_type(level, initial_state, action_library, goal_description)
     elif agent_type_name == 'nondeterministic_advanced':
