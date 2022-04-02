@@ -121,6 +121,9 @@ class PullAction:
     def calculate_agent_positions(self, current_agent_position: Position) -> Position:
         return pos_add(current_agent_position, self.agent_delta)
 
+    def calculate_box_positions(self, current_box_position: Position) -> Position:
+        return pos_add(current_box_position, self.box_delta)
+
     def is_applicable(self, agent_index: int, state: h_state.HospitalState) -> bool:
         # check if new agent space is free
         current_agent_position, agent_char = state.agent_positions[agent_index]
@@ -142,12 +145,23 @@ class PullAction:
     def result(self, agent_index: int, state: h_state.HospitalState):
         current_agent_position, agent_char = state.agent_positions[agent_index]
         new_agent_position = self.calculate_positions(current_agent_position)
-        state.agent_positions[agent_index] = (new_agent_position, agent_char)
 
-        # do the same for the box
-        _, box_char = state.box_positions[self.box_idx]
+        box_position = pos_sub(current_agent_position, self.box_delta)
+        box_idx, box_char = state.box_at(box_position)
         new_box_position = current_agent_position
-        state.box_positions[self.box_idx] = (new_box_position, box_char)
+
+
+
+        # current_agent_position, agent_char = state.agent_positions[agent_index]
+        # new_agent_position = self.calculate_positions(current_agent_position)
+        #
+        #
+        # # do the same for the box
+        # _, box_char = state.box_positions[self.box_idx]
+        # new_box_position = current_agent_position
+
+        state.box_positions[box_idx] = (new_box_position, box_char)
+        state.agent_positions[agent_index] = (new_agent_position, agent_char)
 
     def conflicts(self, agent_index: int, state: h_state.HospitalState) -> tuple[list[Position], list[Position]]:
         current_agent_position, _ = state.agent_positions[agent_index]
@@ -205,14 +219,17 @@ class PushAction:
         current_agent_position, agent_char = state.agent_positions[agent_index]
         new_agent_position = self.calculate_agent_positions(current_agent_position)
 
-        state.agent_positions[agent_index] = (new_agent_position, agent_char)
+
 
         # do the same for the box
-        _, box_char = state.box_positions[self.box_idx]
-        current_box_position = new_agent_position
-        new_box_position = self.calculate_box_positions(current_box_position)
+        box_position = new_agent_position
+        box_idx, box_char = state.box_at(box_position)
+        new_box_position = self.calculate_box_positions(box_position)
 
-        state.box_positions[self.box_idx] = (new_box_position, box_char)
+
+        # update
+        state.box_positions[box_idx] = (new_box_position, box_char)
+        state.agent_positions[agent_index] = (new_agent_position, agent_char)
 
     def conflicts(self, agent_index: int, state: h_state.HospitalState) -> tuple[list[Position], list[Position]]:
         current_agent_position, _ = state.agent_positions[agent_index]
