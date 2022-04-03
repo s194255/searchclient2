@@ -10,6 +10,7 @@ from domains.hospital.heuristics import BFSHeu
 from strategies.bestfirst import FrontierAStar, FrontierGreedy
 from agent_types.helper import helper_agent_type
 from agent_types.non_deterministic import non_deterministic_agent_type
+from agent_types.non_deterministic_advanced import non_deterministic_advanced_agent_type
 
 from search_algorithms.graph_search import graph_search
 from agent_types.decentralised import decentralised_agent_type
@@ -28,7 +29,7 @@ def load_lvl_lines(path):
 
 
 def main():
-    level_path = "../levels/SAsoko1_nondet.lvl"
+    level_path = "../levels/SAsoko2_nondet.lvl"
 
     level_lines = load_lvl_lines(level_path)
     level = HospitalLevel.parse_level_lines(level_lines)
@@ -45,7 +46,7 @@ def main():
 
     # decentralised_agent_type(level, initial_state, action_library, goal_description, frontier)
 
-    non_deterministic_agent_type(level, initial_state, action_library, goal_description)
+    non_deterministic_advanced_agent_type(level, initial_state, action_library, goal_description)
     # helper_agent_type(level, initial_state, action_library, goal_description, frontier)
 
 
