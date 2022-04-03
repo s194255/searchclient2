@@ -103,7 +103,7 @@ def non_deterministic_advanced_agent_type(level, initial_state, action_library, 
             is_applicable = current_state.is_applicable(new_joint_action)
             if is_broken and is_applicable:
                 # Send the joint action to the server (also print it for help)
-                print(f"Ups! Orthogonal push {joint_action_to_string(new_joint_action)}", flush=True, file=sys.stderr)
+                print(f"Ups! Orthogonal push: {joint_action_to_string(joint_action)} turned into {joint_action_to_string(new_joint_action)}", flush=True, file=sys.stderr)
                 # print(joint_action_to_string(new_joint_action), flush=True, file=sys.stderr)
                 print(joint_action_to_string(new_joint_action), flush=True)
                 _ = parse_response(read_line())
