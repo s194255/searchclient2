@@ -95,10 +95,9 @@ def helper_agent_type(level, initial_state, action_library, actor_goal_descripti
         if planning_success == False:
             print("execution faulted", file=sys.stderr)
 
-
+        helper_goal_description = HospitalGoalDescription(level, [])
         for time_step in range(len(actor_plan)):
             actor_action = actor_plan[time_step]
-            helper_goal_description = HospitalGoalDescription(level, [])
 
             #loop until actor is allowed perform an action
             while True:

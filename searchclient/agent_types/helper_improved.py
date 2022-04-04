@@ -196,12 +196,14 @@ def make_plan(current_state, agent_goals, controllable_agents, level, frontier, 
     ggoals = []
     for agent_char in controllable_agents:
         colors.append(level.colors[agent_char])
-        ggoals.extend(agent_goals[agent_char])
-        # Gammelt: kan beskrives i video
-        # if agent_char != "0":
-        #     ggoals.extend(agent_goals[agent_char])
-        # else:
-        #     ggoals.extend(agent_goals[agent_char])
+
+        # slettemette
+        if agent_char != "0":
+            ggoals.extend(agent_goals[agent_char])
+
+
+        # huskemette
+        # ggoals.extend(agent_goals[agent_char])
 
     mono_state = current_state.color_filters(colors)
     mono_goaldes = HospitalGoalDescription(level, ggoals)
@@ -286,18 +288,12 @@ def helper_improved_agent_type(level, initial_state, action_library, actor_goal_
 
         while goal_des.is_goal(copy.deepcopy(current_state)) == False:
             if hårdknudefaktor < 1:
-                print("-------------LIGE NAIV PLAN-------------", file=sys.stderr)
                 planning_success, plan = make_naive_plan(copy.deepcopy(current_state), agent_goals, controllable_agents,
                                                    level, frontier, action_library)
             else:
-                print("-------------LIGE HÅRDKNUDEPLAN-------------", file=sys.stderr)
                 planning_success, plan = make_plan(copy.deepcopy(current_state), agent_goals, controllable_agents,
                                                    level, frontier, action_library)
-            print("-------------LIGE LAVET NY PLAN-------------", file=sys.stderr)
-            print("current_state", current_state, file=sys.stderr)
-            print("agent goals", agent_goals, file=sys.stderr)
-            print("controllable_agents", controllable_agents, file=sys.stderr)
-            print("plaaaan", plan, file=sys.stderr)
+
 
 
             # while actor succeeds in actions
@@ -305,8 +301,7 @@ def helper_improved_agent_type(level, initial_state, action_library, actor_goal_
             while time_step < len(plan):
                 joint_action = get_joint_action(plan, time_step,
                                                 controllable_agents, level, copy.deepcopy(current_state))
-                print("-------------NYT TIDSSKRIDT-------------", file=sys.stderr)
-                print("current_state", current_state, file=sys.stderr)
+
 
 
                 print(joint_action_to_string(joint_action), flush=True)
@@ -337,7 +332,6 @@ def helper_improved_agent_type(level, initial_state, action_library, actor_goal_
                         applicable_actions.append(joint_action[agent_idx])
 
                 # current_state is updated based on legal moves only
-                print("current_state", current_state, file=sys.stderr)
                 current_state = current_state.result(applicable_actions)
                 # time.sleep(1)
 
