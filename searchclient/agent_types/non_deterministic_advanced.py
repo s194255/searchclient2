@@ -115,7 +115,7 @@ def non_deterministic_advanced_agent_type(level, initial_state, action_library, 
                 current_state = current_state.result(joint_action)
         else:
             # Send the joint action to the server (also print it for help)
-            # print(joint_action_to_string(joint_action), flush=True, file=sys.stderr)
+            print(joint_action_to_string(joint_action), flush=True, file=sys.stderr)
             print(joint_action_to_string(joint_action), flush=True)
             _ = parse_response(read_line())
             current_state = current_state.result(joint_action)
