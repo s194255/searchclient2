@@ -41,15 +41,17 @@ def get_helper_goals(path, level, current_state, agent_goals, helper_char):
     box_chars = get_boxes_with_color(current_state, level, helper_color)
 
     for pos in path:
-        helper_goals.add( (pos, helper_char, False))
+        helper_goals.add((pos, helper_char, False))
         for box_char in box_chars:
             helper_goals.add((pos, box_char, False))
 
-    for (pos, char, isPositive) in agent_goals["0"]:
-        helper_goals.add( (pos, helper_char, False))
+    for (pos, _, _) in agent_goals["0"]:
+        helper_goals.add((pos, helper_char, False))
 
         for box_char in box_chars:
             helper_goals.add((pos, box_char, False))
+
+
 
     return helper_goals
 
@@ -189,9 +191,6 @@ def make_naive_plan(current_state, agent_goals, controllable_agents, level, fron
     return planning_successes[0], plan
 
 
-
-
-
 def make_plan(current_state, agent_goals, controllable_agents, level, frontier, action_library):
     colors = []
     ggoals = []
@@ -219,8 +218,9 @@ def prune_controllable_agents(controllable_agents, actor_path, current_state):
     for (agent_pos, agent_char) in current_state.agent_positions:
         if agent_char in controllable_agents:
             if agent_pos not in actor_path:
+
                 controllable_agents.remove(agent_char)
-            #todo vi mangler at holde øje med kasserne
+            #todo vi mangler at holde øje med kasserne (hvis agenten har kasse på path)
 
 
 def helper_improved_agent_type(level, initial_state, action_library, actor_goal_description, frontier):
