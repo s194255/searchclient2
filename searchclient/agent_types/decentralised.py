@@ -42,7 +42,7 @@ def decentralised_agent_type(level, initial_state, action_library, goal_descript
         if planning_success == False:
             print("hov", file=sys.stderr)
 
-    print(pi, file=sys.stderr)
+    # print(pi, file=sys.stderr)
 
     while sum([len(plan) for plan in pi.values()]) != 0:
         joint_action = []
