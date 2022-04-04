@@ -49,7 +49,7 @@ def AND_search(states, problem, path, results, action_set,d):
 
 
 def and_or_graph_search(initial_state, action_set, goal_description, results):
-    d = 20
+    d = 5
 
     # Here you should implement AND-OR-GRAPH-SEARCH. We are going to use a policy format, mapping from states to actions.
     # The algorithm should return a pair (worst_case_length, or_plan)
