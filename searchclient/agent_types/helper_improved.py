@@ -273,7 +273,6 @@ def helper_improved_agent_type(level, initial_state, action_library, actor_goal_
 
     for sub_goal in actor_goal_description.goals:
 
-
         actor_goals.add(sub_goal)
         goal_des = HospitalGoalDescription(level, actor_goals)
 
@@ -347,6 +346,165 @@ def helper_improved_agent_type(level, initial_state, action_library, actor_goal_
                 else:
                     # todo hvad hvis helperen er den sidste der bevæger sig?
                     hårdknudefaktor = 0
+
+
+def helper_improved_agent_type_manhat(level, initial_state, action_library, actor_goal_description, frontier):
+
+    # Here you should implement the HELPER-AGENT algorithm.
+    # Some tips are:
+    # - From goal_description, you should look into color_filter and get_sub_goal to create monochrome and subgoal problems.
+    # - You should handle communication with the server yourself and check successes of joint actions.
+    #   Look into classic.py to see how this is done.
+    # - You can create an action set where only a specific agent is allowed to move as follows:
+    #   action_set = [[GenericNoOp()]] * level.num_agents
+    #   action_set[agent_index] = action_library
+    # - You probably want to create a helper function for creating the set of negative obstacle subgoals.
+    #   You can then create a new goal description using 'goal_description.create_new_goal_description_of_same_type'
+    #   which takes a list of subgoals.
+
+    # agent 0 is the first in list, hopefully always
+    actor_index = 0
+
+    action_set = [[GenericNoOp()]] * level.num_agents
+    action_set[actor_index] = action_library
+
+
+    current_state = initial_state
+
+    actor_goals = set([])
+
+    goalposes = {}
+    for sub_goal in actor_goal_description.goals:
+        print("subgåwl",sub_goal,file=sys.stderr)
+        goal_pos, box_char, _ = sub_goal
+        goalposes[box_char] = goal_pos
+
+    boxes_dist = {}
+    actor_pos = current_state.agent_positions[0][0]
+    print(actor_pos, file=sys.stderr)
+    for (box_pos, box_char) in current_state.box_positions:
+        if level.colors[box_char] == level.colors["0"]:
+            boxes_dist[box_char] = abs(goalposes[box_char][0]-box_pos[0])+abs(goalposes[box_char][1]-box_pos[1])
+            boxes_dist[box_char] += abs(actor_pos[0]-box_pos[0])+abs(actor_pos[1]-box_pos[1])
+
+
+    print("Afstand fra æ agent til æ kass til æ mål", boxes_dist, file=sys.stderr)
+    # time.sleep(5)
+
+    while len(boxes_dist) > 0:
+        for sub_goal in actor_goal_description.goals:
+            next_box = min(boxes_dist, key=boxes_dist.get)
+            if sub_goal[1] == next_box:
+                boxes_dist.pop(next_box)
+                actor_goals.add(sub_goal)
+                goal_des = HospitalGoalDescription(level, actor_goals)
+
+                controllable_agents = set(["0"])
+
+                agent_goals = {}
+                for agent_pos, agent_char in copy.deepcopy(current_state).agent_positions:
+                    agent_goals[agent_char] = []
+                agent_goals["0"] = actor_goals
+
+                hårdknudefaktor = 0
+
+                while goal_des.is_goal(copy.deepcopy(current_state)) == False:
+                    if hårdknudefaktor < 1:
+                        planning_success, plan = make_naive_plan(copy.deepcopy(current_state), agent_goals, controllable_agents,
+                                                           level, frontier, action_library)
+                    else:
+                        planning_success, plan = make_plan(copy.deepcopy(current_state), agent_goals, controllable_agents,
+                                                           level, frontier, action_library)
+
+
+
+                    # while actor succeeds in actions
+                    time_step = 0
+                    while time_step < len(plan):
+                        joint_action = get_joint_action(plan, time_step,
+                                                        controllable_agents, level, copy.deepcopy(current_state))
+
+
+
+                        print(joint_action_to_string(joint_action), flush=True)
+                        execution_successes = parse_response(read_line())
+
+
+                        # applicable actions will be used to update current_state
+                        applicable_actions = []
+                        for agent_idx in range(level.num_agents):
+                            agent_pos, agent_char = copy.deepcopy(current_state).agent_positions[agent_idx]
+
+                            if execution_successes[agent_idx] == False:
+                                applicable_actions.append(GenericNoOp())
+
+                                if agent_char in controllable_agents:
+                                    color_conflict, char_conflict, idx_conflict = get_conflicting_helper(copy.deepcopy(current_state), plan,
+                                                                                                         agent_idx, level,
+                                                                                                         time_step)
+                                    if color_conflict != False:
+                                        controllable_agents.add(char_conflict)
+                                        actor_path = get_actor_path(plan, level, actor_index,
+                                                                    copy.deepcopy(current_state), time_step)
+                                        negative_goals = get_helper_goals(actor_path, level,
+                                                                          copy.deepcopy(current_state),
+                                                                          agent_goals, char_conflict)
+                                        agent_goals[char_conflict] = negative_goals
+                            else:
+                                applicable_actions.append(joint_action[agent_idx])
+
+                        # current_state is updated based on legal moves only
+                        current_state = current_state.result(applicable_actions)
+                        # time.sleep(1)
+
+
+                        time_step += 1
+
+                        # If actor failed action, then we have to replan
+                        if execution_successes[actor_index] == False:
+                            hårdknudefaktor += 1
+                            prune_controllable_agents(controllable_agents,
+                                                      actor_path, copy.deepcopy(current_state), agent_goals, level)
+                            break
+                        else:
+                            # todo hvad hvis helperen er den sidste der bevæger sig?
+                            hårdknudefaktor = 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
