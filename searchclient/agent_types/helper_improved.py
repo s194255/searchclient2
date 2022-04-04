@@ -196,14 +196,15 @@ def make_plan(current_state, agent_goals, controllable_agents, level, frontier, 
     ggoals = []
     for agent_char in controllable_agents:
         colors.append(level.colors[agent_char])
-        if agent_char != "0":
-            ggoals.extend(agent_goals[agent_char])
-        else:
-            ggoals.extend(agent_goals[agent_char])
+        ggoals.extend(agent_goals[agent_char])
+        # Gammelt: kan beskrives i video
+        # if agent_char != "0":
+        #     ggoals.extend(agent_goals[agent_char])
+        # else:
+        #     ggoals.extend(agent_goals[agent_char])
 
     mono_state = current_state.color_filters(colors)
     mono_goaldes = HospitalGoalDescription(level, ggoals)
-
 
     action_set = [action_library] * len(mono_state.agent_positions)
 
@@ -215,21 +216,31 @@ def make_plan(current_state, agent_goals, controllable_agents, level, frontier, 
 
     return planning_success, plan
 
-def prune_controllable_agents(controllable_agents, actor_path, current_state, agent_goals):
+def prune_controllable_agents(controllable_agents, actor_path, current_state, agent_goals, level):
 
     for (agent_pos, agent_char) in current_state.agent_positions:
         if agent_char in controllable_agents:
             path_check = (agent_pos not in actor_path)
+
+            box_check = True
+            helper_color = level.colors[agent_char]
+
+            for (box_pos, box_char) in current_state.box_positions:
+                box_color = level.colors[box_char]
+                if box_color == helper_color:
+                    if box_pos in actor_path:
+                        box_check = False
+                    for (goal_pos, _, _) in agent_goals["0"]:
+                        if goal_pos == box_pos:
+                            box_check = False
 
             goal_check = True
             for (goal_pos, _, _) in agent_goals["0"]:
                 if goal_pos == agent_pos:
                     goal_check = False
 
-            if path_check and goal_check:
+            if path_check and goal_check and box_check:
                 controllable_agents.remove(agent_char)
-
-            #todo vi mangler at holde øje med kasserne
 
 
 def helper_improved_agent_type(level, initial_state, action_library, actor_goal_description, frontier):
@@ -337,7 +348,7 @@ def helper_improved_agent_type(level, initial_state, action_library, actor_goal_
                 if execution_successes[actor_index] == False:
                     hårdknudefaktor += 1
                     prune_controllable_agents(controllable_agents,
-                                              actor_path, copy.deepcopy(current_state), agent_goals)
+                                              actor_path, copy.deepcopy(current_state), agent_goals, level)
                     break
                 else:
                     # todo hvad hvis helperen er den sidste der bevæger sig?
