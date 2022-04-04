@@ -1,0 +1,23 @@
+#domain
+hospital
+#levelname
+SAsoko_cyclic
+#colors
+blue: 0, A
+#initial
++++++++++
++ A     +
++    + 0+
++ + +   +
++ + +++++
++++ +++++
++++++++++
+#goal
++++++++++
++       +
++    +  +
++ + +  A+
++ + +++++
++++ +++++
++++++++++
+#end

@@ -40,7 +40,7 @@ def AND_search(states, problem, path, results, action_set,d):
         s = states[i]
         p = OR_search(s, problem, path, results, action_set,d-1)
         if p != False:
-            plan.update(OR_search(s, problem, path, results, action_set,d-1))
+            plan.update(p)
         if p == False:
             return False
         # print(plan, file=sys.stderr)
@@ -49,7 +49,7 @@ def AND_search(states, problem, path, results, action_set,d):
 
 
 def and_or_graph_search(initial_state, action_set, goal_description, results):
-    d = 12
+    d = 20
 
     # Here you should implement AND-OR-GRAPH-SEARCH. We are going to use a policy format, mapping from states to actions.
     # The algorithm should return a pair (worst_case_length, or_plan)
@@ -65,39 +65,52 @@ def cyclic_OR_search(state, problem, path, results, action_set,d):
     # print("or search", file=sys.stderr)
     if problem.is_goal(state):
         return {}
-    # if state in path:
-    #     return False
+    if state in path:
+        return 'loop'
     if d == 0:
         return False
+    cyclic_plan = None
     actions = state.get_applicable_actions(action_set)
     # print("actions!!!:", actions, file=sys.stderr)
     for action in actions:
-        plan = cyclic_AND_search(results(state, action), problem, [state] + path, results, action_set,d)
+        plan = cyclic_AND_search(results(state, action, action_set), problem, [state] + path, results, action_set,d)
+        # print("plan",plan, file=sys.stderr)
         if plan != False:
             plan[state] = action
-            # print("børge",plan, file=sys.stderr)
+            # print(plan, file=sys.stderr)
+            # print("chips", file=sys.stderr)
             return plan
     return False
 
 def cyclic_AND_search(states, problem, path, results, action_set, d):
     # print("and search", file=sys.stderr)
     plan = {}
+    loopy = True
     for i in range(len(states)):
         s = states[i]
-        p = cyclic_OR_search(s, problem, path, results, action_set,d-1)
-        if p != False:
-            plan.update(OR_search(s, problem, path, results, action_set,d-1))
+        p = cyclic_OR_search(s, problem, path, results, action_set, d - 1)
+        # print("p",p, file=sys.stderr)
         if p == False:
-            pass
-    return plan
+            return False
+        if p != 'loop':
+            loopy = False
+        if p != False and p != 'loop':
+            plan.update(p)
+        # print("nothing happened in state {}".format(s), file=sys.stderr)
+    if not loopy:
+        return plan
+        # print(plan, file=sys.stderr)
+        # print("chips2", file=sys.stderr)
+    return False
+
 
 def cyclic_and_or_graph_search(initial_state, action_set, goal_description, results):
-    d = 12
+    d = 25
 
     # Here you should implement AND-OR-GRAPH-SEARCH. We are going to use a policy format, mapping from states to actions.
     # The algorithm should return a pair (worst_case_length, or_plan)
     # where the or_plan is a dictionary with states as keys and actions as values
-    or_plan = OR_search(initial_state, goal_description, [], results, action_set, d)
+    or_plan = cyclic_OR_search(initial_state, goal_description, [], results, action_set, d)
     if or_plan == False:
         d = None
     # print(or_plan, file=sys.stderr)
