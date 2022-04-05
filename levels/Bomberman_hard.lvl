@@ -1,0 +1,25 @@
+#domain
+hospital
+#levelname
+Bomberman_hard
+#colors
+blue: 0, A
+#initial
+++++++++
++++ + ++
+++    A+
++  + + +
+++     +
++  + + +
+++0    +
+++++++++
+#goal
+++++++++
++++ + ++
+++     +
++  + + +
+++  A  +
++  + + +
+++     +
+++++++++
+#end
